@@ -1,0 +1,685 @@
+import { useState, useEffect } from “react”;
+
+const FOODS_DB = [
+// ── Grains & Pasta ──
+{ name: “White Rice”, carbs: 45, sugar: 0, gi: 72, harmful: true, category: “Grains & Pasta”, reason: “Very high glycemic index — spikes blood sugar rapidly” },
+{ name: “Brown Rice”, carbs: 38, sugar: 0, gi: 50, harmful: false, category: “Grains & Pasta” },
+{ name: “White Pasta”, carbs: 43, sugar: 1, gi: 50, harmful: true, category: “Grains & Pasta”, reason: “High carb refined grain — moderate-high blood sugar impact” },
+{ name: “Whole Wheat Pasta”, carbs: 35, sugar: 1, gi: 37, harmful: false, category: “Grains & Pasta” },
+{ name: “Wheat (whole grain, cooked)”, carbs: 30, sugar: 0, gi: 41, harmful: false, category: “Grains & Pasta” },
+{ name: “Semolina (cooked)”, carbs: 40, sugar: 0, gi: 66, harmful: true, category: “Grains & Pasta”, reason: “High GI refined wheat — causes rapid blood sugar elevation” },
+{ name: “Oats / Oatmeal (rolled)”, carbs: 27, sugar: 1, gi: 55, harmful: false, category: “Grains & Pasta” },
+{ name: “Oats (instant)”, carbs: 30, sugar: 1, gi: 79, harmful: true, category: “Grains & Pasta”, reason: “Instant oats are highly processed — much higher GI than rolled oats” },
+
+// ── Bread & Cereals ──
+{ name: “White Bread”, carbs: 28, sugar: 3, gi: 75, harmful: true, category: “Bread & Cereals”, reason: “High GI processed carb — causes rapid glucose spikes” },
+{ name: “Whole Wheat Bread”, carbs: 20, sugar: 2, gi: 51, harmful: false, category: “Bread & Cereals” },
+{ name: “Sourdough Bread”, carbs: 22, sugar: 1, gi: 54, harmful: false, category: “Bread & Cereals” },
+{ name: “Corn Flakes”, carbs: 36, sugar: 4, gi: 81, harmful: true, category: “Bread & Cereals”, reason: “Very high GI breakfast cereal — avoid or limit strictly” },
+{ name: “Muesli (unsweetened)”, carbs: 28, sugar: 6, gi: 40, harmful: false, category: “Bread & Cereals” },
+{ name: “Sugary Cereal (e.g. Frosties)”, carbs: 42, sugar: 28, gi: 77, harmful: true, category: “Bread & Cereals”, reason: “Extremely high sugar and GI — very dangerous for diabetics” },
+{ name: “Bran Flakes”, carbs: 30, sugar: 5, gi: 54, harmful: false, category: “Bread & Cereals” },
+{ name: “Cornmeal Porridge (Ogi/Akamu)”, carbs: 28, sugar: 1, gi: 68, harmful: true, category: “Bread & Cereals”, reason: “Moderate-high GI — limit portion and avoid adding sugar” },
+
+// ── West African Staples ──
+{ name: “Yam (boiled)”, carbs: 28, sugar: 0, gi: 54, harmful: false, category: “West African Staples” },
+{ name: “Yam (fried)”, carbs: 35, sugar: 0, gi: 68, harmful: true, category: “West African Staples”, reason: “Frying increases GI significantly — causes faster blood sugar spike” },
+{ name: “Poundo Yam (pounded yam)”, carbs: 44, sugar: 0, gi: 74, harmful: true, category: “West African Staples”, reason: “Highly processed yam — very high GI, spikes blood sugar rapidly” },
+{ name: “Yam Flour (amala)”, carbs: 42, sugar: 0, gi: 71, harmful: true, category: “West African Staples”, reason: “Processed yam flour with high GI — raises glucose quickly” },
+{ name: “Plantain Flour (amala abula)”, carbs: 40, sugar: 2, gi: 65, harmful: true, category: “West African Staples”, reason: “High carb flour — moderate-high GI, use in small portions only” },
+{ name: “Boiled Plantain (unripe)”, carbs: 30, sugar: 3, gi: 45, harmful: false, category: “West African Staples” },
+{ name: “Boiled Plantain (ripe)”, carbs: 38, sugar: 14, gi: 60, harmful: true, category: “West African Staples”, reason: “Ripe plantain is high in natural sugars — raises blood sugar noticeably” },
+{ name: “Fried Plantain — Dodo (ripe)”, carbs: 40, sugar: 12, gi: 65, harmful: true, category: “West African Staples”, reason: “High sugar + frying — double spike risk for diabetics” },
+{ name: “Cassava Flakes (Garri)”, carbs: 82, sugar: 0, gi: 84, harmful: true, category: “West African Staples”, reason: “One of the highest GI staples — causes severe blood sugar spikes, avoid” },
+{ name: “Eba (garri + hot water)”, carbs: 75, sugar: 0, gi: 80, harmful: true, category: “West African Staples”, reason: “Extremely high GI from processed cassava — major blood sugar spike risk” },
+{ name: “Fufu (cassava-based)”, carbs: 55, sugar: 0, gi: 72, harmful: true, category: “West African Staples”, reason: “High carb processed starch — causes significant glucose elevation” },
+{ name: “Tuwo Shinkafa (rice flour swallow)”, carbs: 50, sugar: 0, gi: 73, harmful: true, category: “West African Staples”, reason: “Very high GI rice-based swallow — spikes blood sugar rapidly” },
+{ name: “Akpu / Fufu (fermented cassava)”, carbs: 48, sugar: 0, gi: 70, harmful: true, category: “West African Staples”, reason: “High GI fermented cassava — elevates blood glucose significantly” },
+
+// ── Beans & Legumes ──
+{ name: “Black-eyed Beans (cooked)”, carbs: 21, sugar: 3, gi: 33, harmful: false, category: “Beans & Legumes” },
+{ name: “Kidney Beans (cooked)”, carbs: 22, sugar: 0, gi: 29, harmful: false, category: “Beans & Legumes” },
+{ name: “Lentils (cooked)”, carbs: 20, sugar: 2, gi: 32, harmful: false, category: “Beans & Legumes” },
+{ name: “Chickpeas (cooked)”, carbs: 27, sugar: 5, gi: 28, harmful: false, category: “Beans & Legumes” },
+{ name: “Brown Beans / Honey Beans”, carbs: 20, sugar: 2, gi: 30, harmful: false, category: “Beans & Legumes” },
+{ name: “Baked Beans (tinned)”, carbs: 25, sugar: 5, gi: 48, harmful: false, category: “Beans & Legumes” },
+{ name: “Moi Moi (steamed beans pudding)”, carbs: 19, sugar: 2, gi: 32, harmful: false, category: “Beans & Legumes” },
+{ name: “Akara (fried bean cakes)”, carbs: 22, sugar: 1, gi: 45, harmful: false, category: “Beans & Legumes” },
+{ name: “Pigeon Peas (cooked)”, carbs: 23, sugar: 3, gi: 22, harmful: false, category: “Beans & Legumes” },
+{ name: “Soybeans (cooked)”, carbs: 9, sugar: 0, gi: 18, harmful: false, category: “Beans & Legumes” },
+
+// ── Eggs ──
+{ name: “Boiled Eggs”, carbs: 1, sugar: 0, gi: 0, harmful: false, category: “Eggs” },
+{ name: “Fried Eggs (in little oil)”, carbs: 1, sugar: 0, gi: 0, harmful: false, category: “Eggs” },
+{ name: “Fried Eggs (deep-fried / excessive oil)”, carbs: 1, sugar: 0, gi: 0, harmful: true, category: “Eggs”, reason: “Excess saturated fat from deep frying worsens insulin resistance over time” },
+{ name: “Scrambled Eggs”, carbs: 1, sugar: 0, gi: 0, harmful: false, category: “Eggs” },
+{ name: “Egg Omelette (plain)”, carbs: 2, sugar: 0, gi: 0, harmful: false, category: “Eggs” },
+
+// ── Meat & Protein ──
+{ name: “Chicken (grilled / skinless)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Chicken (fried with skin)”, carbs: 8, sugar: 0, gi: 0, harmful: true, category: “Meat & Protein”, reason: “Breading + frying adds carbs and inflammatory fats — worsens insulin resistance” },
+{ name: “Red Meat — Beef (grilled/boiled)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Red Meat — Beef (processed/stew)”, carbs: 5, sugar: 2, gi: 0, harmful: true, category: “Meat & Protein”, reason: “Processed red meat increases insulin resistance and inflammation risk” },
+{ name: “Red Meat — Goat (cooked)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Red Meat — Lamb (grilled)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Red Meat — Pork (lean, grilled)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Sausages (pork / beef)”, carbs: 6, sugar: 2, gi: 28, harmful: true, category: “Meat & Protein”, reason: “High saturated fat + preservatives — worsen insulin sensitivity over time” },
+{ name: “Sausages (chicken / turkey, lean)”, carbs: 4, sugar: 1, gi: 20, harmful: false, category: “Meat & Protein” },
+{ name: “Sardines (in water)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Sardines (in tomato sauce)”, carbs: 4, sugar: 3, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Sardines (in oil)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Fish — Grilled / Boiled”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Fish — Fried (battered)”, carbs: 7, sugar: 0, gi: 0, harmful: true, category: “Meat & Protein”, reason: “Batter + frying increases carb load and adds inflammatory fats” },
+{ name: “Fish — Smoked / Dried (stockfish)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Mackerel (grilled)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Salmon (grilled/baked)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Tuna (in water, tinned)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+{ name: “Turkey (roasted, skinless)”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Meat & Protein” },
+
+// ── Drinks ──
+{ name: “Sugar (white, 1 tsp)”, carbs: 4, sugar: 4, gi: 65, harmful: true, category: “Drinks & Sugar”, reason: “Pure glucose — spikes blood sugar immediately, avoid adding to food/drinks” },
+{ name: “Sugar (brown, 1 tsp)”, carbs: 4, sugar: 4, gi: 64, harmful: true, category: “Drinks & Sugar”, reason: “Marginally less refined than white sugar — still spikes blood glucose rapidly” },
+{ name: “Soda / Fizzy Drink (355ml)”, carbs: 39, sugar: 39, gi: 65, harmful: true, category: “Drinks & Sugar”, reason: “Extremely high sugar — dangerous for blood glucose control” },
+{ name: “Drink from Concentrate (Ribena, Squash)”, carbs: 28, sugar: 27, gi: 60, harmful: true, category: “Drinks & Sugar”, reason: “High added sugar even when diluted — avoid or dilute very heavily” },
+{ name: “100% Fruit Juice (not from concentrate)”, carbs: 26, sugar: 23, gi: 55, harmful: true, category: “Drinks & Sugar”, reason: “Natural juice lacks fibre and causes blood sugar spikes — eat whole fruit instead” },
+{ name: “Orange Juice (fresh, 250ml)”, carbs: 26, sugar: 21, gi: 50, harmful: true, category: “Drinks & Sugar”, reason: “High natural sugar without fibre — causes notable glucose rise” },
+{ name: “Alcoholic Energy Drink (e.g. Four Loko)”, carbs: 60, sugar: 55, gi: 70, harmful: true, category: “Drinks & Sugar”, reason: “Extremely dangerous — high sugar + alcohol severely disrupts blood sugar regulation” },
+{ name: “Non-Alcoholic Energy Drink (e.g. Red Bull)”, carbs: 28, sugar: 27, gi: 68, harmful: true, category: “Drinks & Sugar”, reason: “High sugar + caffeine — blood sugar spike plus adrenal and cardiac stress” },
+{ name: “Beer (330ml)”, carbs: 13, sugar: 0, gi: 66, harmful: true, category: “Drinks & Sugar”, reason: “Alcohol interferes with glucose metabolism — can cause dangerous lows or highs” },
+{ name: “Wine (dry, 150ml)”, carbs: 4, sugar: 1, gi: 0, harmful: false, category: “Drinks & Sugar” },
+{ name: “Water”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Drinks & Sugar” },
+{ name: “Unsweetened Tea”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Drinks & Sugar” },
+{ name: “Unsweetened Black Coffee”, carbs: 0, sugar: 0, gi: 0, harmful: false, category: “Drinks & Sugar” },
+{ name: “Zobo (hibiscus drink, unsweetened)”, carbs: 3, sugar: 0, gi: 15, harmful: false, category: “Drinks & Sugar” },
+{ name: “Zobo (sweetened)”, carbs: 22, sugar: 20, gi: 55, harmful: true, category: “Drinks & Sugar”, reason: “Added sugar in zobo eliminates its health benefit — spikes blood glucose” },
+
+// ── Snacks & Treats ──
+{ name: “Ice Cream (regular)”, carbs: 24, sugar: 21, gi: 61, harmful: true, category: “Snacks & Treats”, reason: “High sugar + saturated fat — spikes blood sugar and worsens insulin resistance” },
+{ name: “Ice Cream (low-sugar / diabetic)”, carbs: 12, sugar: 5, gi: 30, harmful: false, category: “Snacks & Treats” },
+{ name: “Candy / Sweets”, carbs: 44, sugar: 30, gi: 70, harmful: true, category: “Snacks & Treats”, reason: “Pure sugar and refined carbs — extremely harmful for diabetics” },
+{ name: “Dark Chocolate (85%+)”, carbs: 13, sugar: 4, gi: 23, harmful: false, category: “Snacks & Treats” },
+{ name: “Milk Chocolate”, carbs: 35, sugar: 30, gi: 49, harmful: true, category: “Snacks & Treats”, reason: “High sugar content — raises blood glucose significantly” },
+{ name: “Chin Chin”, carbs: 55, sugar: 10, gi: 70, harmful: true, category: “Snacks & Treats”, reason: “Deep-fried high-carb snack — causes blood sugar spike” },
+{ name: “Puff Puff”, carbs: 40, sugar: 8, gi: 65, harmful: true, category: “Snacks & Treats”, reason: “Fried dough with sugar — high GI and carb load” },
+{ name: “Peanuts (unsalted)”, carbs: 7, sugar: 2, gi: 14, harmful: false, category: “Snacks & Treats” },
+{ name: “Popcorn (plain, air-popped)”, carbs: 12, sugar: 0, gi: 55, harmful: false, category: “Snacks & Treats” },
+{ name: “French Fries”, carbs: 35, sugar: 0, gi: 76, harmful: true, category: “Snacks & Treats”, reason: “High GI + unhealthy fats — damaging for blood sugar & insulin resistance” },
+{ name: “Honey (1 tsp)”, carbs: 17, sugar: 17, gi: 55, harmful: true, category: “Snacks & Treats”, reason: “High natural sugar — use sparingly or avoid” },
+
+// ── Vegetables & Fruit ──
+{ name: “Sweet Potato (boiled)”, carbs: 21, sugar: 7, gi: 44, harmful: false, category: “Veg & Fruit” },
+{ name: “Watermelon”, carbs: 12, sugar: 10, gi: 76, harmful: true, category: “Veg & Fruit”, reason: “High glycemic index despite low carbs — raises blood sugar fast” },
+{ name: “Banana (ripe)”, carbs: 27, sugar: 14, gi: 51, harmful: false, category: “Veg & Fruit” },
+{ name: “Apple”, carbs: 25, sugar: 19, gi: 36, harmful: false, category: “Veg & Fruit” },
+{ name: “Avocado”, carbs: 9, sugar: 1, gi: 15, harmful: false, category: “Veg & Fruit” },
+{ name: “Broccoli”, carbs: 7, sugar: 2, gi: 15, harmful: false, category: “Veg & Fruit” },
+{ name: “Spinach”, carbs: 4, sugar: 0, gi: 15, harmful: false, category: “Veg & Fruit” },
+{ name: “Ugwu / Pumpkin Leaf”, carbs: 3, sugar: 0, gi: 12, harmful: false, category: “Veg & Fruit” },
+{ name: “Bitter Leaf (Onugbu)”, carbs: 2, sugar: 0, gi: 10, harmful: false, category: “Veg & Fruit” },
+{ name: “Tomatoes (fresh)”, carbs: 4, sugar: 3, gi: 15, harmful: false, category: “Veg & Fruit” },
+{ name: “Cucumber”, carbs: 4, sugar: 2, gi: 15, harmful: false, category: “Veg & Fruit” },
+{ name: “Pawpaw / Papaya”, carbs: 11, sugar: 8, gi: 60, harmful: false, category: “Veg & Fruit” },
+{ name: “Mango (ripe)”, carbs: 25, sugar: 22, gi: 51, harmful: true, category: “Veg & Fruit”, reason: “Very high natural sugar — causes notable blood sugar rise, limit portions” },
+{ name: “Orange (whole fruit)”, carbs: 15, sugar: 12, gi: 43, harmful: false, category: “Veg & Fruit” },
+{ name: “Pineapple”, carbs: 13, sugar: 10, gi: 59, harmful: false, category: “Veg & Fruit” },
+
+// ── Dairy ──
+{ name: “Full-fat Yogurt (plain)”, carbs: 8, sugar: 7, gi: 36, harmful: false, category: “Dairy” },
+{ name: “Flavoured Yogurt”, carbs: 30, sugar: 24, gi: 52, harmful: true, category: “Dairy”, reason: “High added sugar — opt for plain yogurt instead” },
+{ name: “Whole Milk (250ml)”, carbs: 12, sugar: 12, gi: 31, harmful: false, category: “Dairy” },
+{ name: “Skimmed Milk (250ml)”, carbs: 12, sugar: 12, gi: 32, harmful: false, category: “Dairy” },
+{ name: “Almond Milk (unsweetened)”, carbs: 2, sugar: 0, gi: 25, harmful: false, category: “Dairy” },
+{ name: “Condensed Milk (1 tbsp)”, carbs: 21, sugar: 21, gi: 61, harmful: true, category: “Dairy”, reason: “Concentrated sugar — commonly added to tea/porridge, very harmful for diabetics” },
+];
+
+const DAILY_LIMITS = { carbs: 130, sugar: 25 };
+const MEAL_TIMES = [“Breakfast”, “Morning Snack”, “Lunch”, “Afternoon Snack”, “Dinner”, “Evening Snack”];
+const TABS = [“dashboard”, “add food”, “my log”, “a1c”, “report”, “reminders”];
+const TAB_ICONS = { dashboard: “📊”, “add food”: “➕”, “my log”: “📋”, a1c: “🩸”, report: “📄”, reminders: “⏰” };
+
+const inputStyle = {
+width: “100%”, padding: “10px 13px”, borderRadius: 10, border: “1px solid #1e3a5f”,
+background: “#0d1f35”, color: “#e2e8f0”, fontSize: 13, fontFamily: “inherit”,
+outline: “none”, boxSizing: “border-box”,
+};
+const card = { background: “#0d1f35”, borderRadius: 14, padding: “16px”, border: “1px solid #1e3a5f” };
+
+const GIBadge = ({ gi }) => {
+if (!gi) return <span style={{ fontSize: 10, color: “#334155” }}>No GI</span>;
+const color = gi >= 70 ? “#ef4444” : gi >= 56 ? “#f97316” : “#22c55e”;
+return <span style={{ fontSize: 10, fontWeight: 700, color, background: color + “18”, padding: “2px 6px”, borderRadius: 4 }}>GI {gi} · {gi >= 70 ? “High” : gi >= 56 ? “Med” : “Low”}</span>;
+};
+
+const Ring = ({ pct, color, label, val, limit, unit }) => {
+const r = 36, circ = 2 * Math.PI * r, dash = (Math.min(pct, 100) / 100) * circ;
+return (
+<div style={{ display: “flex”, flexDirection: “column”, alignItems: “center”, gap: 4 }}>
+<div style={{ position: “relative”, width: 90, height: 90 }}>
+<svg width={90} height={90} style={{ transform: “rotate(-90deg)” }}>
+<circle cx={45} cy={45} r={r} fill="none" stroke="#1e293b" strokeWidth={7} />
+<circle cx={45} cy={45} r={r} fill=“none” stroke={color} strokeWidth={7}
+strokeDasharray={`${dash} ${circ}`} strokeLinecap=“round”
+style={{ transition: “stroke-dasharray 0.5s ease” }} />
+</svg>
+<div style={{ position: “absolute”, inset: 0, display: “flex”, flexDirection: “column”, alignItems: “center”, justifyContent: “center” }}>
+<span style={{ fontSize: 19, fontWeight: 800, color, fontFamily: “monospace”, lineHeight: 1 }}>{val}</span>
+<span style={{ fontSize: 9, color: “#64748b” }}>{unit}</span>
+</div>
+</div>
+<div style={{ textAlign: “center” }}>
+<div style={{ fontSize: 11, fontWeight: 700, color: “#cbd5e1” }}>{label}</div>
+<div style={{ fontSize: 10, color: “#475569” }}>of {limit}{unit} {pct >= 100 ? “⛔” : pct >= 75 ? “⚠️” : “✓”}</div>
+</div>
+</div>
+);
+};
+
+export default function GlycoGuard() {
+const [log, setLog] = useState([]);
+const [customFoods, setCustomFoods] = useState([]);
+const [search, setSearch] = useState(””);
+const [tab, setTab] = useState(“dashboard”);
+const [addedIds, setAddedIds] = useState(new Set());
+const [notif, setNotif] = useState(null);
+const [showHarmful, setShowHarmful] = useState(false);
+const [selectedMeal, setSelectedMeal] = useState(“Breakfast”);
+const [reminders, setReminders] = useState([
+{ id: 1, label: “Breakfast log”, time: “08:00”, active: true },
+{ id: 2, label: “Lunch log”, time: “13:00”, active: true },
+{ id: 3, label: “Dinner log”, time: “19:00”, active: false },
+{ id: 4, label: “Blood sugar check”, time: “21:00”, active: false },
+]);
+const [bloodSugar, setBloodSugar] = useState(””);
+const [a1cReadings, setA1cReadings] = useState([]);
+const [patientName, setPatientName] = useState(“Patient”);
+const [patientAge, setPatientAge] = useState(””);
+const [diabetesType, setDiabetesType] = useState(“Type 2”);
+const [gpNotes, setGpNotes] = useState(””);
+const [newRemLabel, setNewRemLabel] = useState(””);
+const [newRemTime, setNewRemTime] = useState(“09:00”);
+const [cf, setCf] = useState({ name: “”, carbs: “”, sugar: “”, gi: “”, harmful: false, reason: “” });
+const [cfError, setCfError] = useState(””);
+const [selectedCategory, setSelectedCategory] = useState(“All”);
+
+const CATEGORIES = [“All”, …Array.from(new Set(FOODS_DB.map(f => f.category)))];
+const allFoods = […FOODS_DB, …customFoods];
+const filtered = allFoods.filter(f =>
+f.name.toLowerCase().includes(search.toLowerCase()) &&
+(selectedCategory === “All” || f.category === selectedCategory)
+);
+const totalCarbs = log.reduce((s, f) => s + Number(f.carbs), 0);
+const totalSugar = log.reduce((s, f) => s + Number(f.sugar), 0);
+const harmfulCount = log.filter(f => f.harmful).length;
+const byMeal = MEAL_TIMES.reduce((acc, m) => { acc[m] = log.filter(f => f.meal === m); return acc; }, {});
+
+const notify = (type, msg, dur = 2500) => {
+setNotif({ type, msg });
+setTimeout(() => setNotif(null), dur);
+};
+
+const addFood = (food) => {
+const entry = { …food, id: Date.now(), meal: selectedMeal, time: new Date().toLocaleTimeString([], { hour: “2-digit”, minute: “2-digit” }) };
+setLog(prev => […prev, entry]);
+setAddedIds(prev => new Set([…prev, food.name]));
+if (food.harmful) notify(“warn”, `⚠️ "${food.name}" is harmful for diabetics.`, 3500);
+else notify(“ok”, `✓ "${food.name}" added to ${selectedMeal}.`);
+};
+
+const removeFood = (id) => {
+setLog(prev => {
+const removed = prev.find(f => f.id === id);
+const next = prev.filter(f => f.id !== id);
+if (removed && !next.some(f => f.name === removed.name))
+setAddedIds(p => { const n = new Set(p); n.delete(removed.name); return n; });
+return next;
+});
+};
+
+const logBloodSugar = () => {
+const val = parseFloat(bloodSugar);
+if (!val || val < 2 || val > 35) return notify(“warn”, “Enter a valid blood sugar (2–35 mmol/L)”);
+const mgdl = val * 18;
+const estimatedA1C = ((mgdl + 46.7) / 28.7).toFixed(1);
+setA1cReadings(prev => […prev, { id: Date.now(), val, mgdl: Math.round(mgdl), a1c: estimatedA1C, time: new Date().toLocaleTimeString([], { hour: “2-digit”, minute: “2-digit” }), date: new Date().toLocaleDateString() }]);
+setBloodSugar(””);
+notify(“ok”, `Logged ${val} mmol/L → Est. A1C: ${estimatedA1C}%`);
+};
+
+const avgA1C = a1cReadings.length ? (a1cReadings.reduce((s, r) => s + parseFloat(r.a1c), 0) / a1cReadings.length).toFixed(1) : null;
+const a1cStatus = !avgA1C ? null : avgA1C < 5.7 ? { label: “Normal”, color: “#22c55e” } : avgA1C < 6.5 ? { label: “Pre-diabetic”, color: “#f97316” } : { label: “Diabetic range”, color: “#ef4444” };
+
+const generateReport = () => {
+const date = new Date().toLocaleDateString(“en-GB”, { day: “numeric”, month: “long”, year: “numeric” });
+return [
+`GLYCOGUARD — PATIENT DIETARY REPORT`,
+`Generated: ${date}`,
+`${"─".repeat(44)}`,
+`Patient: ${patientName}  |  Age: ${patientAge || "N/A"}  |  Diabetes: ${diabetesType}`,
+`, `DAILY NUTRITIONAL SUMMARY`, `  Total Carbohydrates : ${totalCarbs}g  (Daily limit: ${DAILY_LIMITS.carbs}g)`, `  Total Sugar         : ${totalSugar}g  (Daily limit: ${DAILY_LIMITS.sugar}g)`, `  Foods Logged        : ${log.length}`, `  Harmful Items       : ${harmfulCount}`, `,
+`BLOOD SUGAR & ESTIMATED A1C`,
+a1cReadings.length ? `  Readings: ${a1cReadings.length}  |  Avg A1C: ${avgA1C}%  (${a1cStatus?.label})` : `  No readings logged today.`,
+`, `MEAL BREAKDOWN`, ...MEAL_TIMES.flatMap(m => { const items = byMeal[m]; if (!items.length) return []; return [`  ${m}:`, ...items.map(f => `    • ${f.name} — Carbs: ${f.carbs}g, Sugar: ${f.sugar}g${f.harmful ? " ⚠ HARMFUL" : ""}`)]; }), `,
+`HARMFUL FOODS CONSUMED`,
+…(log.filter(f => f.harmful).length ? log.filter(f => f.harmful).map(f => `  ⚠ ${f.name} (${f.meal}) — ${f.reason}`) : [”  None logged today.”]),
+`, `GP NOTES`, gpNotes || "  No additional notes.", `,
+`─────────────────────────────────────────────`,
+`This report was generated by GlycoGuard.`,
+`Not a substitute for professional medical advice.`,
+].join(”\n”);
+};
+
+const downloadReport = () => {
+const blob = new Blob([generateReport()], { type: “text/plain” });
+const url = URL.createObjectURL(blob);
+const a = document.createElement(“a”);
+a.href = url; a.download = `GlycoGuard_Report_${new Date().toISOString().slice(0, 10)}.txt`;
+a.click(); URL.revokeObjectURL(url);
+notify(“ok”, “📄 Report downloaded!”);
+};
+
+const addCustomFood = () => {
+if (!cf.name.trim()) return setCfError(“Food name is required.”);
+if (cf.carbs === “” || cf.sugar === “”) return setCfError(“Carbs and sugar are required.”);
+if (cf.harmful && !cf.reason.trim()) return setCfError(“Please explain why this food is harmful.”);
+setCustomFoods(prev => […prev, { name: cf.name.trim(), carbs: Number(cf.carbs), sugar: Number(cf.sugar), gi: Number(cf.gi) || 0, harmful: cf.harmful, reason: cf.reason, custom: true }]);
+setCf({ name: “”, carbs: “”, sugar: “”, gi: “”, harmful: false, reason: “” });
+setCfError(””);
+notify(“ok”, `✓ "${cf.name.trim()}" added to food library!`);
+};
+
+return (
+<div style={{ minHeight: “100vh”, background: “#060e1a”, fontFamily: “‘DM Sans’, sans-serif”, color: “#e2e8f0”, paddingBottom: 70 }}>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+```
+  {/* Toast */}
+  {notif && (
+    <div style={{
+      position: "fixed", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 999,
+      background: notif.type === "warn" ? "#450a0a" : "#052e16",
+      border: `1px solid ${notif.type === "warn" ? "#ef4444" : "#22c55e"}`,
+      color: notif.type === "warn" ? "#fca5a5" : "#86efac",
+      padding: "9px 18px", borderRadius: 10, fontSize: 12, fontWeight: 600,
+      boxShadow: "0 8px 32px #000b", whiteSpace: "nowrap", maxWidth: "90vw"
+    }}>{notif.msg}</div>
+  )}
+
+  <div style={{ maxWidth: 560, margin: "0 auto", padding: "0 16px" }}>
+    {/* Header */}
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24 }}>
+      <div>
+        <div style={{ fontSize: 23, fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.5px" }}>
+          Glyco<span style={{ color: "#34d399" }}>Guard</span>
+          <span style={{ fontSize: 10, fontWeight: 400, color: "#334155", marginLeft: 6 }}>v2.0</span>
+        </div>
+        <div style={{ fontSize: 10, color: "#1e3a5f", marginTop: 1 }}>Diabetic Daily Intake Monitor</div>
+      </div>
+      <div style={{ background: harmfulCount > 0 ? "#450a0a" : "#052e16", border: `1px solid ${harmfulCount > 0 ? "#7f1d1d" : "#14532d"}`, borderRadius: 10, padding: "5px 12px", textAlign: "center" }}>
+        <div style={{ fontSize: 19, fontWeight: 800, color: harmfulCount > 0 ? "#fca5a5" : "#4ade80", lineHeight: 1 }}>{harmfulCount}</div>
+        <div style={{ fontSize: 9, color: harmfulCount > 0 ? "#fca5a5" : "#4ade80" }}>HARMFUL</div>
+      </div>
+    </div>
+
+    {/* Tabs */}
+    <div style={{ display: "flex", gap: 5, marginTop: 16, overflowX: "auto", paddingBottom: 2 }}>
+      {TABS.map(t => (
+        <button key={t} onClick={() => setTab(t)} style={{
+          flexShrink: 0, padding: "6px 9px", borderRadius: 9, border: "none", cursor: "pointer",
+          background: tab === t ? "#1e3a5f" : "#0d1f35",
+          color: tab === t ? "#7dd3fc" : "#334155",
+          fontWeight: tab === t ? 700 : 500, fontSize: 10, fontFamily: "inherit",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 2, transition: "all 0.2s"
+        }}>
+          <span style={{ fontSize: 15 }}>{TAB_ICONS[t]}</span>
+          <span style={{ textTransform: "capitalize" }}>{t}</span>
+        </button>
+      ))}
+    </div>
+
+    {/* ═══ DASHBOARD ═══ */}
+    {tab === "dashboard" && (
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ ...card, display: "flex", justifyContent: "space-around", alignItems: "center" }}>
+          <Ring pct={(totalCarbs / DAILY_LIMITS.carbs) * 100} color="#38bdf8" label="Carbs" val={totalCarbs} limit={DAILY_LIMITS.carbs} unit="g" />
+          <div style={{ width: 1, height: 80, background: "#1e3a5f" }} />
+          <Ring pct={(totalSugar / DAILY_LIMITS.sugar) * 100} color="#f472b6" label="Sugar" val={totalSugar} limit={DAILY_LIMITS.sugar} unit="g" />
+        </div>
+
+        <div style={{ ...card, background: harmfulCount > 0 ? "#1c0606" : "#071a0e", border: `1px solid ${harmfulCount > 0 ? "#7f1d1d" : "#14532d"}`, display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 26 }}>{harmfulCount > 0 ? "⚠️" : "✅"}</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 13, color: harmfulCount > 0 ? "#fca5a5" : "#86efac" }}>
+              {harmfulCount > 0 ? `${harmfulCount} harmful item${harmfulCount > 1 ? "s" : ""} in your log` : "No harmful foods logged today"}
+            </div>
+            <div style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>
+              {harmfulCount > 0 ? "Go to My Log → remove harmful items." : "Great choices! Keep tracking your meals."}
+            </div>
+          </div>
+        </div>
+
+        {avgA1C && (
+          <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 10, color: "#475569" }}>EST. AVERAGE A1C</div>
+              <div style={{ fontSize: 38, fontWeight: 800, color: a1cStatus.color, fontFamily: "monospace", lineHeight: 1.1 }}>{avgA1C}%</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: a1cStatus.color }}>{a1cStatus.label}</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {[["< 5.7%", "Normal", "#22c55e"], ["5.7–6.4%", "Pre-diabetic", "#f97316"], ["≥ 6.5%", "Diabetic", "#ef4444"]].map(([r, l, c]) => (
+                <div key={l} style={{ fontSize: 10, color: c, background: c + "14", padding: "3px 8px", borderRadius: 5 }}>● {r} — {l}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {[["🍽️", log.length, "Foods Logged"], ["✅", log.filter(f => !f.harmful).length, "Safe Foods"], ["🌾", Math.max(DAILY_LIMITS.carbs - totalCarbs, 0) + "g", "Carbs Left"], ["🍬", Math.max(DAILY_LIMITS.sugar - totalSugar, 0) + "g", "Sugar Left"]].map(([icon, val, label]) => (
+            <div key={label} style={card}>
+              <div style={{ fontSize: 18 }}>{icon}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#f1f5f9", fontFamily: "monospace", marginTop: 4 }}>{val}</div>
+              <div style={{ fontSize: 10, color: "#475569", marginTop: 1 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={card}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#7dd3fc", marginBottom: 8 }}>MEALS TODAY</div>
+          {MEAL_TIMES.map(m => {
+            const items = byMeal[m];
+            if (!items.length) return null;
+            const mCarbs = items.reduce((s, f) => s + Number(f.carbs), 0);
+            return (
+              <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", background: "#0a1929", borderRadius: 8, border: `1px solid ${items.some(f => f.harmful) ? "#7f1d1d" : "#1e3a5f"}`, marginBottom: 5 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>{m} <span style={{ fontSize: 10, color: "#475569" }}>({items.length}){items.some(f => f.harmful) ? " ⚠️" : ""}</span></span>
+                <span style={{ fontSize: 11, fontFamily: "monospace", color: "#38bdf8" }}>{mCarbs}g</span>
+              </div>
+            );
+          })}
+          {log.length === 0 && <div style={{ fontSize: 11, color: "#1e3a5f", textAlign: "center", padding: "8px 0" }}>No meals logged yet</div>}
+        </div>
+      </div>
+    )}
+
+    {/* ═══ ADD FOOD ═══ */}
+    {tab === "add food" && (
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 10, color: "#475569", marginBottom: 6, fontWeight: 700 }}>LOG TO MEAL</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {MEAL_TIMES.map(m => (
+              <button key={m} onClick={() => setSelectedMeal(m)} style={{
+                padding: "6px 11px", borderRadius: 8, border: `1px solid ${selectedMeal === m ? "#38bdf8" : "#1e3a5f"}`,
+                background: selectedMeal === m ? "#0c2a45" : "transparent",
+                color: selectedMeal === m ? "#7dd3fc" : "#475569",
+                fontSize: 11, fontWeight: selectedMeal === m ? 700 : 500, cursor: "pointer", fontFamily: "inherit"
+              }}>{m}</button>
+            ))}
+          </div>
+        </div>
+
+        <input type="text" placeholder="🔍  Search foods..." value={search} onChange={e => setSearch(e.target.value)} style={inputStyle} />
+
+        {/* Category filter */}
+        <div style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 2 }}>
+          {CATEGORIES.map(cat => (
+            <button key={cat} onClick={() => setSelectedCategory(cat)} style={{
+              flexShrink: 0, padding: "5px 10px", borderRadius: 8,
+              border: `1px solid ${selectedCategory === cat ? "#a78bfa" : "#1e3a5f"}`,
+              background: selectedCategory === cat ? "#2d1b69" : "transparent",
+              color: selectedCategory === cat ? "#c4b5fd" : "#334155",
+              fontSize: 10, fontWeight: selectedCategory === cat ? 700 : 500,
+              cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap"
+            }}>{cat}</button>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 10, color: "#334155" }}>{filtered.filter(f => !showHarmful || f.harmful).length} results</span>
+          <button onClick={() => setShowHarmful(p => !p)} style={{ padding: "5px 11px", borderRadius: 8, border: `1px solid ${showHarmful ? "#ef4444" : "#1e3a5f"}`, background: showHarmful ? "#450a0a" : "transparent", color: showHarmful ? "#fca5a5" : "#475569", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>
+            {showHarmful ? "⚠️ Harmful only" : "All foods"}
+          </button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 7, maxHeight: 320, overflowY: "auto" }}>
+          {filtered.filter(f => !showHarmful || f.harmful).map((food, i) => (
+            <div key={food.name + i} style={{ background: food.harmful ? "#1c0606" : "#0a1929", border: `1px solid ${food.harmful ? "#7f1d1d" : "#1e3a5f"}`, borderRadius: 11, padding: "11px 13px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 700, fontSize: 13, color: "#f1f5f9" }}>{food.name}</span>
+                  {food.harmful && <span style={{ fontSize: 9, color: "#fca5a5", background: "#7f1d1d", padding: "1px 5px", borderRadius: 3, fontWeight: 700 }}>HARMFUL</span>}
+                  {food.custom && <span style={{ fontSize: 9, color: "#a78bfa", background: "#2d1b69", padding: "1px 5px", borderRadius: 3 }}>CUSTOM</span>}
+                </div>
+                <div style={{ marginTop: 3, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 10, color: "#38bdf8", fontFamily: "monospace" }}>C {food.carbs}g</span>
+                  <span style={{ fontSize: 10, color: "#f472b6", fontFamily: "monospace" }}>S {food.sugar}g</span>
+                  <GIBadge gi={food.gi} />
+                </div>
+                {food.harmful && <div style={{ marginTop: 4, fontSize: 10, color: "#fca5a5", lineHeight: 1.4 }}>⚠ {food.reason}</div>}
+              </div>
+              <button onClick={() => addFood(food)} style={{ background: addedIds.has(food.name) ? "#1e3a5f" : "#0c4a6e", border: "none", borderRadius: 7, padding: "6px 11px", color: addedIds.has(food.name) ? "#475569" : "#7dd3fc", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
+                {addedIds.has(food.name) ? "✓" : "+ Add"}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Custom Food */}
+        <div style={{ ...card, marginTop: 4, border: "1px solid #2d1b69" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#a78bfa", marginBottom: 10 }}>➕ ADD CUSTOM FOOD TO LIBRARY</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <input placeholder="Food name *" value={cf.name} onChange={e => setCf(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
+              <input placeholder="Carbs (g)*" type="number" value={cf.carbs} onChange={e => setCf(p => ({ ...p, carbs: e.target.value }))} style={inputStyle} />
+              <input placeholder="Sugar (g)*" type="number" value={cf.sugar} onChange={e => setCf(p => ({ ...p, sugar: e.target.value }))} style={inputStyle} />
+              <input placeholder="GI score" type="number" value={cf.gi} onChange={e => setCf(p => ({ ...p, gi: e.target.value }))} style={inputStyle} />
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#94a3b8", cursor: "pointer" }}>
+              <input type="checkbox" checked={cf.harmful} onChange={e => setCf(p => ({ ...p, harmful: e.target.checked }))} style={{ accentColor: "#ef4444" }} />
+              Mark as harmful for diabetics
+            </label>
+            {cf.harmful && <input placeholder="Why is it harmful? *" value={cf.reason} onChange={e => setCf(p => ({ ...p, reason: e.target.value }))} style={inputStyle} />}
+            {cfError && <div style={{ fontSize: 11, color: "#fca5a5" }}>⚠ {cfError}</div>}
+            <button onClick={addCustomFood} style={{ background: "#4c1d95", border: "none", borderRadius: 10, padding: "10px", color: "#c4b5fd", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Save to Library</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ═══ MY LOG ═══ */}
+    {tab === "my log" && (
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+        {log.length === 0 ? (
+          <div style={{ textAlign: "center", color: "#1e3a5f", padding: "60px 20px" }}>
+            <div style={{ fontSize: 36 }}>🍽️</div>
+            <div style={{ fontSize: 13, marginTop: 10, color: "#334155" }}>No foods logged yet.</div>
+          </div>
+        ) : (
+          <>
+            {harmfulCount > 0 && (
+              <div style={{ background: "#1c0606", border: "1px solid #7f1d1d", borderRadius: 10, padding: "10px 14px", fontSize: 12, color: "#fca5a5" }}>
+                ⚠️ {harmfulCount} harmful food{harmfulCount > 1 ? "s" : ""} — remove them for better control.
+              </div>
+            )}
+            {MEAL_TIMES.map(m => {
+              const items = byMeal[m];
+              if (!items.length) return null;
+              const mCarbs = items.reduce((s, f) => s + Number(f.carbs), 0);
+              const mSugar = items.reduce((s, f) => s + Number(f.sugar), 0);
+              return (
+                <div key={m}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#7dd3fc" }}>{m.toUpperCase()}</span>
+                    <span style={{ fontSize: 10, color: "#475569", fontFamily: "monospace" }}>C {mCarbs}g · S {mSugar}g</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                    {items.map(food => (
+                      <div key={food.id} style={{ background: food.harmful ? "#1c0606" : "#0a1929", border: `1px solid ${food.harmful ? "#7f1d1d" : "#1e3a5f"}`, borderRadius: 10, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                            <span style={{ fontWeight: 700, fontSize: 13, color: "#f1f5f9" }}>{food.name}</span>
+                            {food.harmful && <span style={{ fontSize: 9, background: "#7f1d1d", color: "#fca5a5", padding: "1px 5px", borderRadius: 3 }}>HARMFUL</span>}
+                            <span style={{ fontSize: 9, color: "#334155" }}>{food.time}</span>
+                          </div>
+                          <div style={{ marginTop: 3, display: "flex", gap: 8 }}>
+                            <span style={{ fontSize: 10, color: "#38bdf8", fontFamily: "monospace" }}>C {food.carbs}g</span>
+                            <span style={{ fontSize: 10, color: "#f472b6", fontFamily: "monospace" }}>S {food.sugar}g</span>
+                          </div>
+                          {food.harmful && <div style={{ fontSize: 10, color: "#fca5a5", marginTop: 3 }}>⚠ {food.reason}</div>}
+                        </div>
+                        <button onClick={() => removeFood(food.id)} style={{ background: food.harmful ? "#7f1d1d" : "#0d1f35", border: `1px solid ${food.harmful ? "#ef4444" : "#1e3a5f"}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", color: food.harmful ? "#fca5a5" : "#475569", fontSize: 11, fontFamily: "inherit" }}>Remove</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
+    )}
+
+    {/* ═══ A1C ESTIMATOR ═══ */}
+    {tab === "a1c" && (
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={card}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#f472b6", marginBottom: 8 }}>🩸 LOG BLOOD SUGAR (mmol/L)</div>
+          <div style={{ fontSize: 11, color: "#475569", marginBottom: 10, lineHeight: 1.5 }}>
+            Enter your blood glucose level. GlycoGuard estimates your A1C using the eAG formula.
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input type="number" step="0.1" min="2" max="35" placeholder="e.g. 7.2" value={bloodSugar} onChange={e => setBloodSugar(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+            <button onClick={logBloodSugar} style={{ background: "#831843", border: "1px solid #f472b6", borderRadius: 10, padding: "10px 16px", color: "#f9a8d4", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>Log</button>
+          </div>
+        </div>
+
+        {avgA1C && (
+          <div style={{ ...card, border: `2px solid ${a1cStatus.color}44` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 10, color: "#475569" }}>ESTIMATED AVERAGE A1C</div>
+                <div style={{ fontSize: 46, fontWeight: 800, color: a1cStatus.color, fontFamily: "monospace", lineHeight: 1.1 }}>{avgA1C}%</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: a1cStatus.color }}>{a1cStatus.label}</div>
+                <div style={{ fontSize: 10, color: "#475569", marginTop: 2 }}>Based on {a1cReadings.length} reading{a1cReadings.length > 1 ? "s" : ""}</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                {[["< 5.7%", "Normal", "#22c55e"], ["5.7–6.4%", "Pre-diabetic", "#f97316"], ["≥ 6.5%", "Diabetic", "#ef4444"]].map(([r, l, c]) => (
+                  <div key={l} style={{ fontSize: 10, color: c, background: c + "14", padding: "4px 8px", borderRadius: 5, fontWeight: 600 }}>{r} — {l}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {a1cReadings.length > 0 && (
+          <div style={card}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#7dd3fc", marginBottom: 8 }}>READING HISTORY</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {[...a1cReadings].reverse().map(r => {
+                const c = r.a1c < 5.7 ? "#22c55e" : r.a1c < 6.5 ? "#f97316" : "#ef4444";
+                return (
+                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 10px", background: "#0a1929", borderRadius: 8 }}>
+                    <div>
+                      <span style={{ fontWeight: 700, color: "#e2e8f0", fontFamily: "monospace" }}>{r.val} mmol/L</span>
+                      <span style={{ fontSize: 10, color: "#334155", marginLeft: 8 }}>{r.time}</span>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: c }}>A1C ~{r.a1c}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {a1cReadings.length === 0 && <div style={{ textAlign: "center", color: "#1e3a5f", padding: "30px 0", fontSize: 13 }}><div style={{ fontSize: 32, marginBottom: 8 }}>🩸</div>Log your first reading above.</div>}
+
+        <div style={{ ...card, background: "#071a0e", border: "1px solid #14532d" }}>
+          <div style={{ fontSize: 10, color: "#4ade80", fontWeight: 700, marginBottom: 4 }}>ℹ️ FORMULA USED</div>
+          <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.6 }}>
+            eAG formula: <span style={{ fontFamily: "monospace", color: "#94a3b8" }}>A1C = (glucose_mg/dL + 46.7) / 28.7</span><br />
+            For clinical accuracy, ask your GP for an HbA1c blood test.
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ═══ GP REPORT ═══ */}
+    {tab === "report" && (
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={card}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#34d399", marginBottom: 10 }}>📄 PATIENT DETAILS</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <input placeholder="Patient name" value={patientName} onChange={e => setPatientName(e.target.value)} style={inputStyle} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+              <input placeholder="Age" type="number" value={patientAge} onChange={e => setPatientAge(e.target.value)} style={inputStyle} />
+              <select value={diabetesType} onChange={e => setDiabetesType(e.target.value)} style={{ ...inputStyle }}>
+                <option>Type 1</option><option>Type 2</option><option>Gestational</option><option>Pre-diabetic</option><option>LADA</option>
+              </select>
+            </div>
+            <textarea placeholder="Additional GP notes..." value={gpNotes} onChange={e => setGpNotes(e.target.value)} style={{ ...inputStyle, minHeight: 75, resize: "vertical" }} />
+          </div>
+        </div>
+
+        <div style={{ ...card, background: "#060e1a" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#7dd3fc", marginBottom: 8 }}>PREVIEW</div>
+          <pre style={{ fontSize: 10, color: "#475569", fontFamily: "DM Mono, monospace", lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0, maxHeight: 280, overflowY: "auto" }}>{generateReport()}</pre>
+        </div>
+
+        <button onClick={downloadReport} style={{ background: "linear-gradient(135deg, #065f46, #047857)", border: "1px solid #34d399", borderRadius: 12, padding: "13px", color: "#6ee7b7", fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
+          📥 Download GP Report (.txt)
+        </button>
+        <div style={{ fontSize: 10, color: "#1e3a5f", textAlign: "center" }}>For informational use only. Always consult your GP.</div>
+      </div>
+    )}
+
+    {/* ═══ REMINDERS ═══ */}
+    {tab === "reminders" && (
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ fontSize: 11, color: "#334155", lineHeight: 1.5 }}>
+          Set meal and check-up reminders below. Visual reminders only — use your phone's clock app for push alerts.
+        </div>
+
+        <div style={{ ...card, border: "1px solid #78350f" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", marginBottom: 8 }}>⏰ NEW REMINDER</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <input placeholder="Label (e.g. Post-meal check)" value={newRemLabel} onChange={e => setNewRemLabel(e.target.value)} style={inputStyle} />
+            <div style={{ display: "flex", gap: 7 }}>
+              <input type="time" value={newRemTime} onChange={e => setNewRemTime(e.target.value)} style={{ ...inputStyle, flex: 1, colorScheme: "dark" }} />
+              <button onClick={() => { if (!newRemLabel.trim()) return; setReminders(p => [...p, { id: Date.now(), label: newRemLabel.trim(), time: newRemTime, active: true }]); setNewRemLabel(""); setNewRemTime("09:00"); notify("ok", "⏰ Reminder added!"); }} style={{ background: "#78350f", border: "1px solid #fbbf24", borderRadius: 10, padding: "10px 14px", color: "#fde68a", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>+ Add</button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          {reminders.map(r => (
+            <div key={r.id} style={{ ...card, background: r.active ? "#0a1a2e" : "#0a0f18", border: `1px solid ${r.active ? "#1e4976" : "#1a1f2e"}`, display: "flex", justifyContent: "space-between", alignItems: "center", opacity: r.active ? 1 : 0.55 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 18 }}>{r.active ? "🔔" : "🔕"}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: r.active ? "#e2e8f0" : "#475569" }}>{r.label}</div>
+                  <div style={{ fontSize: 12, color: "#38bdf8", fontFamily: "monospace" }}>{r.time}</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 5 }}>
+                <button onClick={() => setReminders(p => p.map(x => x.id === r.id ? { ...x, active: !x.active } : x))} style={{ background: r.active ? "#052e16" : "#1e3a5f", border: `1px solid ${r.active ? "#22c55e" : "#334155"}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", color: r.active ? "#86efac" : "#475569", fontSize: 11, fontFamily: "inherit" }}>{r.active ? "On" : "Off"}</button>
+                <button onClick={() => setReminders(p => p.filter(x => x.id !== r.id))} style={{ background: "#1c0606", border: "1px solid #7f1d1d", borderRadius: 7, padding: "5px 8px", cursor: "pointer", color: "#fca5a5", fontSize: 11, fontFamily: "inherit" }}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={card}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#7dd3fc", marginBottom: 8 }}>QUICK PRESETS</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {[["Morning check", "07:30"], ["Before breakfast", "08:00"], ["Post-meal check", "09:30"], ["Lunch reminder", "12:30"], ["Afternoon snack", "15:30"], ["Evening check", "20:00"]].map(([label, time]) => (
+              <button key={label} onClick={() => { setReminders(p => [...p, { id: Date.now(), label, time, active: true }]); notify("ok", `⏰ "${label}" added!`); }} style={{ background: "#0d1f35", border: "1px solid #1e3a5f", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "#7dd3fc", fontSize: 11, fontFamily: "inherit" }}>+ {label}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+```
+
+);
+}
